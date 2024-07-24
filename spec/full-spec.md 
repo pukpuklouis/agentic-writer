@@ -1,0 +1,550 @@
+# Agentic Writer Workflow Application Specification
+
+## 1. Overview
+
+The Agentic Writer Workflow Application is an AI-powered writing assistant that streamlines the process of creating high-quality content from YouTube video transcriptions. It leverages multiple AI agents to handle different aspects of the writing process, from transcription to drafting and review.
+
+## 2. Key Features
+
+- YouTube video transcription processing
+- AI-driven content drafting and refinement
+- Automated review and scoring system
+- User-friendly interface for content editing and management
+- Workflow visualization and progress tracking
+
+## 3. System Architecture
+
+### 3.1 Backend (Python + FastAPI + Crew AI)
+
+### 3.2 Components:
+1. FastAPI Server
+   - Handles API requests from the frontend
+   - Manages authentication and authorization
+   - Routes requests to appropriate Crew AI agents
+
+2. Crew AI Integration
+   - Implements multiple AI agents for different writing tasks
+   - Coordinates agent interactions and workflow
+
+3. Tavily Integration
+   - Implements AI-powered search capabilities
+   - Enhances research and fact-checking processes
+
+4. YouTube API Service
+   - Handles interactions with the YouTube Data API
+   - Manages video information retrieval and transcription downloads
+   - Implements retry logic and rate limiting for API calls
+
+5. Database Access Layer
+   - Provides an abstraction for database operations
+   - Implements CRUD operations for all database tables
+   - Manages database connections and query optimization
+
+6. User Management Service
+   - Handles user registration, login, and profile management
+   - Implements role-based access control
+   - Manages user sessions and authentication tokens
+
+7. Project Management Service
+   - Coordinates the creation and management of writing projects
+   - Tracks project status and progress
+   - Manages relationships between projects, drafts, and other entities
+
+8. Draft Version Control Service
+   - Implements versioning for draft documents
+   - Manages draft states (draft, review, approved)
+   - Provides diff and merge capabilities for draft versions
+
+9. Review and Feedback Service
+   - Manages the review process for drafts
+   - Collects and aggregates feedback from AI agents and human reviewers
+   - Calculates and updates draft scores
+
+10. SEO Optimization Service
+    - Integrates with SEO tools and APIs
+    - Analyzes content for SEO performance
+    - Provides SEO recommendations and scores
+
+11. Collaborative Editing Service
+    - Manages real-time collaborative editing sessions
+    - Implements operational transformation or similar algorithms for conflict resolution
+    - Handles comment creation and management
+
+12. Export Service
+    - Generates various document formats (PDF, Word, Markdown) from drafts
+    - Implements templates for different export styles
+    - Manages integration with external publishing platforms
+
+13. Analytics Service
+    - Collects and processes usage data and metrics
+    - Generates reports on system performance, user activity, and content quality
+    - Provides insights for system optimization and user behavior
+
+14. Notification Service
+    - Manages and sends notifications to users (email, in-app)
+    - Handles notification preferences and subscriptions
+    - Implements notification queuing and scheduling
+
+15. Caching Layer
+    - Implements caching strategies for frequently accessed data
+    - Manages cache invalidation and updates
+    - Improves system performance and reduces database load
+
+16. Background Task Scheduler
+    - Manages long-running or scheduled tasks
+    - Implements job queuing and execution
+    - Handles task prioritization and resource allocation
+
+### 3.3 Agents:
+1. Transcription Agent
+   - Processes YouTube video links
+   - Retrieves and cleans up transcriptions
+
+2. Drafting Agent
+   - Generates initial drafts from transcriptions
+   - Refines drafts based on feedback
+
+3. Review Agent
+   - Evaluates drafts for quality and coherence
+   - Provides feedback and scoring
+
+4. Research Agent (New)
+   - Conducts additional research to supplement the content
+   - Finds relevant statistics, quotes, and examples
+   - Verifies information from the transcription
+   - Suggests related topics or angles to expand the content
+
+5. Search Agent (New)
+   - Utilizes Tavily API for advanced web searching
+   - Provides relevant and up-to-date information to supplement content
+   - Verifies facts and finds supporting evidence for claims in the drafts
+   - Suggests related topics and current trends relevant to the content
+
+### 3.4 User Roles and Permissions
+
+1. Admin
+   - Full access to all features and settings
+   - Can manage user accounts and permissions
+   - Access to analytics and system performance data
+
+2. Editor
+   - Can create, edit, and delete drafts
+   - Access to all writing and editing tools
+   - Can approve final drafts
+
+3. Writer
+   - Can create and edit drafts
+   - Limited access to editing tools
+   - Cannot approve final drafts
+
+4. Viewer
+   - Can view drafts and provide comments
+   - No editing capabilities
+
+### 3.5 Database (Supabase)
+
+#### Table: projects
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| user_id         | uuid      | foreign key references users  |
+| title           | text      | not null                      |
+| description     | text      |                               |
+| status          | text      | 'draft', 'in_progress', 'completed' |
+| created_at      | timestamp | default now()                 |
+| updated_at      | timestamp | default now()                 |
+
+#### Table: drafts
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| project_id      | uuid      | foreign key references projects |
+| version         | integer   | not null                      |
+| content         | text      | not null                      |
+| status          | text      | 'draft', 'review', 'approved' |
+| created_at      | timestamp | default now()                 |
+| updated_at      | timestamp | default now()                 |
+
+#### Table: transcriptions
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| project_id      | uuid      | foreign key references projects |
+| youtube_url     | text      | not null                      |
+| raw_text        | text      | not null                      |
+| processed_text  | text      |                               |
+| language        | text      |                               |
+| duration        | interval  |                               |
+| created_at      | timestamp | default now()                 |
+
+#### Table: reviews
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| draft_id        | uuid      | foreign key references drafts |
+| reviewer_id     | uuid      | foreign key references users  |
+| score           | numeric   | check (score >= 0 and score <= 10) |
+| feedback        | text      |                               |
+| created_at      | timestamp | default now()                 |
+
+#### Table: users
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| email           | text      | unique, not null              |
+| name            | text      | not null                      |
+| role            | text      | 'admin', 'editor', 'writer', 'viewer' |
+| created_at      | timestamp | default now()                 |
+| last_login      | timestamp |                               |
+
+#### Table: comments
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| draft_id        | uuid      | foreign key references drafts |
+| user_id         | uuid      | foreign key references users  |
+| content         | text      | not null                      |
+| created_at      | timestamp | default now()                 |
+
+#### Table: seo_data
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| project_id      | uuid      | foreign key references projects |
+| keywords        | text[]    |                               |
+| meta_description| text      |                               |
+| seo_score       | numeric   | check (seo_score >= 0 and seo_score <= 100) |
+| created_at      | timestamp | default now()                 |
+| updated_at      | timestamp | default now()                 |
+
+#### Table: research_data
+| Column Name     | Data Type | Constraints                   |
+|-----------------|-----------|-------------------------------|
+| id              | uuid      | primary key                   |
+| project_id      | uuid      | foreign key references projects |
+| search_query    | text      | not null                      |
+| results         | jsonb     | not null                      |
+| source          | text      | 'tavily', 'other'             |
+| created_at      | timestamp | default now()                 |
+
+#### Projects table: 
+1. Allows for managing multiple writing projects.
+2. **Drafts table**: Supports version control of drafts within a project.
+3. **Transcriptions** table: Stores both raw and processed transcriptions.
+4. **Reviews table**: Captures feedback and scores for each draft version.
+5. **Users table**: Manages user accounts and roles.
+6. **Comments table**: Enables collaborative discussions on drafts.
+7. **SEO Data table**: Stores SEO-related information for each project.
+8. **Research Data table**: Captures search queries and results from Tavily and other sources.
+
+#### This structure allows for:
+
+- Better organization of projects and their associated drafts
+- Tracking of multiple draft versions and their reviews
+- User management and role-based access control
+- Collaborative features like commenting
+- Storage of SEO and research data linked to projects
+
+
+### 3.6 Frontend (Next.js)
+
+#### Components:
+1. Layout Components
+   - MainLayout: Overall application layout with navigation and user menu
+   - Sidebar: Collapsible sidebar for project navigation and quick actions
+   - Header: App header with search, notifications, and user profile
+   - Footer: App footer with links and copyright information
+
+2. Authentication Components
+   - LoginForm: User login interface
+   - RegistrationForm: New user registration interface
+   - PasswordResetForm: Form for resetting user password
+   - TwoFactorAuthForm: Two-factor authentication interface
+
+3. Dashboard Components
+   - ProjectOverview: Summary of user's projects and their statuses
+   - RecentActivity: Feed of recent actions and updates
+   - QuickStart: Component for quickly starting a new project
+   - PerformanceMetrics: Charts and graphs showing user/project performance
+
+4. Project Management Components
+   - ProjectList: Table/grid view of all user projects
+   - ProjectCard: Individual project summary card
+   - ProjectCreationWizard: Step-by-step interface for creating a new project
+   - ProjectSettings: Interface for managing project details and settings
+
+5. Content Creation Components
+   - TranscriptionUploader: Interface for uploading or linking YouTube videos
+   - TranscriptionViewer: Component to view and edit video transcriptions
+   - DraftEditor: Rich text editor for creating and editing drafts (using Tiptap)
+   - VersionHistory: Interface to view and manage draft versions
+   - AIAssistantPanel: Sidebar panel for interacting with AI writing assistants
+
+6. Review and Feedback Components
+   - ReviewDashboard: Overview of drafts pending review
+   - FeedbackForm: Interface for providing structured feedback on drafts
+   - ScoreCard: Component displaying draft scores and metrics
+   - CommentThread: Threaded comment interface for collaborative discussions
+
+7. SEO Optimization Components
+   - SEOScorecard: Visual representation of content's SEO score
+   - KeywordAnalysis: Interface for keyword research and optimization
+   - ContentOptimizationTips: Component suggesting SEO improvements
+
+8. Research and Search Components
+   - SearchInterface: Advanced search interface using Tavily API
+   - ResearchPanel: Sidebar panel displaying relevant research results
+   - SourceCitationTool: Interface for managing and inserting citations
+
+9. Export and Publishing Components
+   - ExportOptionsPanel: Interface for selecting export format and options
+   - PublishingQueue: Management interface for scheduled publications
+   - PlatformIntegrationSettings: Settings for connecting to external platforms
+
+10. User Management Components
+    - UserProfile: Interface for viewing and editing user profile
+    - TeamManagement: Admin interface for managing team members and roles
+    - ActivityLog: Detailed log of user actions and system events
+
+11. Notification Components
+    - NotificationCenter: Centralized interface for all user notifications
+    - NotificationSettings: User preferences for notification types and frequency
+
+12. Analytics and Reporting Components
+    - AnalyticsDashboard: Comprehensive view of project and user analytics
+    - ReportGenerator: Interface for creating custom reports
+    - PerformanceInsights: AI-driven insights and recommendations based on analytics
+
+13. Collaborative Features
+    - CollaborationHub: Central interface for team collaboration on projects
+    - RealTimeEditingIndicator: Shows other users currently editing a document
+    - ChangeTracker: Visual diff tool for comparing document versions
+
+14. Accessibility Components
+    - ThemeSwitcher: Toggle between light and dark modes
+    - FontSizeAdjuster: Control for adjusting application font size
+    - ScreenReaderOptimizedViews: Alternative layouts optimized for screen readers
+
+15. Help and Support Components
+    - TutorialOverlay: Interactive guide for new users
+    - FAQAccordion: Expandable list of frequently asked questions
+    - SupportTicketForm: Interface for submitting support requests
+    - FeatureRequestForm: Form for users to suggest new features
+#### Pages:
+- Home/Landing Page
+- User Dashboard
+- Project Editor
+- Settings and Preferences
+
+## 4. Workflow
+
+1. User submits YouTube link
+2. Transcription Agent processes the video
+3. Drafting Agent creates initial draft
+4. Review Agent evaluates the draft and provides feedback
+5. Drafting Agent refines based on feedback
+6. Review Agent evaluates the second draft
+7. Drafting Agent creates final draft
+8. Review Agent scores the final draft (if score >= 8, draft is approved)
+
+## 5. API Endpoints
+
+- `/api/drafts`: CRUD operations for managing drafts
+- `/api/transcriptions`: Process YouTube links and handle transcriptions
+- `/api/reviews`: Manage feedback and scoring for drafts
+
+## 6. User Interface
+
+### 6.1 Dashboard
+- Overview of all projects
+- Quick access to create new projects or continue existing ones
+- Status indicators for each project
+
+### 6.2 Project Creation
+- Form to submit YouTube URL
+- Option to set project title and description
+
+### 6.3 Project Editor
+- Side-by-side view of original transcription and current draft
+- Tiptap editor for making manual edits
+- Version history and comparison tool
+- AI suggestion panel
+
+### 6.4 Review Interface
+- Display AI-generated feedback
+- Score visualization
+- Option to request further AI refinement or approve the draft
+
+## 7. Advanced Features
+
+### 7.1 Collaboration Tools
+- Invite team members to projects
+- Comment threads on specific parts of the draft
+- Role-based access control
+
+### 7.2 Content Templates
+- Pre-defined structures for different types of content (blog posts, scripts, articles)
+- Option to create and save custom templates
+
+### 7.3 SEO Optimization
+- Integration with SEO tools to suggest keywords and improvements
+- Readability score and suggestions
+
+### 7.4 Export Options
+- Multiple format exports (PDF, Word, Markdown)
+- Direct integration with popular blogging platforms
+
+### 7.5 Analytics Dashboard
+- Project completion times
+- AI vs. human edit ratios
+- Quality score trends
+
+## 8. Security and Compliance
+
+- Implement robust user authentication and authorization
+- Encrypt sensitive data in transit and at rest
+- Comply with relevant data protection regulations (GDPR, CCPA)
+
+## 9. Performance Optimization
+
+- Implement caching strategies for frequently accessed data
+- Use WebSockets for real-time updates
+- Optimize large text handling in the frontend editor
+
+## 10. Accessibility
+
+- Ensure WCAG 2.1 compliance
+- Implement keyboard navigation throughout the application
+- Provide text alternatives for non-text content
+
+## 11. Future Enhancements
+
+- Multi-language support for transcription and drafting
+- Integration with additional content sources beyond YouTube
+- AI-powered content ideation and outlines
+- Advanced analytics and reporting features
+
+## 12. Error Handling and Edge Cases
+
+1. Transcription Errors
+   - Implement confidence scores for transcribed words
+   - Flag low-confidence sections for manual review
+   - Provide options for manual correction of transcriptions
+
+2. AI Processing Failures
+   - Implement retry mechanisms with exponential backoff
+   - Fallback to alternative AI models if primary model fails
+   - Alert system for persistent AI processing issues
+
+3. YouTube API Limitations
+   - Handle rate limiting and quota restrictions
+   - Implement caching for frequently accessed video data
+   - Provide graceful degradation of features when API is unavailable
+
+4. User Input Validation
+   - Implement robust input validation on both frontend and backend
+   - Provide clear error messages for invalid inputs
+   - Implement CSRF protection and other security measures
+
+## 13. Mobile Considerations
+
+### 13.1 Responsive Design
+- Implement a mobile-first design approach
+- Use responsive CSS frameworks (e.g., Tailwind CSS) for adaptive layouts
+- Optimize touch interactions for mobile devices
+
+### 13.2 Progressive Web App (PWA)
+- Implement service workers for offline capabilities
+- Enable "Add to Home Screen" functionality
+- Optimize asset caching for improved performance
+
+### 13.3 Mobile-Specific Features
+- Implement simplified views for small screens
+- Provide swipe gestures for navigation and editing
+- Optimize Tiptap editor for touch-based input
+
+### 13.4 Performance Optimization
+- Implement lazy loading for long documents
+- Use efficient data synchronization for offline-online transitions
+- Optimize image and media handling for mobile networks
+
+## Suggested Tech Stack for Agentic Writer Workflow Application
+
+### 1. Backend
+**Main Framework:**
+- **FastAPI:** A modern, fast (high-performance) web framework for building APIs with Python 3.6+ based on standard Python type hints.
+
+**AI and Machine Learning:**
+- **OpenRouter API:** For LLM inference, providing access to various language models.
+- **Crew AI:** For implementing and coordinating multiple AI agents.
+- **Langchain:** To enhance AI capabilities and provide a framework for chaining large language models.
+- **Hugging Face Transformers:** For additional NLP tasks and models.
+
+**Database:**
+- **Supabase:** Provides a PostgreSQL database with real-time capabilities and built-in authentication.
+
+**Authentication:**
+- **Supabase Auth:** Integrated authentication system that works seamlessly with Supabase.
+
+**Task Queue:**
+- **Celery:** For handling background tasks and asynchronous processing.
+- **Redis:** As a message broker for Celery and for caching.
+
+### 2. Frontend
+**Main Framework:**
+- **Next.js:** React framework for building server-side rendered and statically generated web applications.
+
+**UI Components:**
+- **shadcn/ui:** For pre-built, customizable UI components.
+- **Tailwind CSS:** For utility-first CSS styling.
+
+**State Management:**
+- **React Query:** For managing server state and caching.
+- **Zustand:** For client-side state management.
+
+**Rich Text Editing:**
+- **Tiptap:** Headless, framework-agnostic rich text editor.
+
+### 3. API Integration
+- **OpenRouter API:** OpenRouter Python Client for easy integration with OpenRouter's API in our Python backend.
+- **YouTube API:** Google APIs Client Library for Python to interact with YouTube Data API for retrieving video information and captions.
+- **SEO Tools:** SEMrush API or Moz API for SEO optimization features.
+
+### 4. DevOps and Deployment
+**Containerization:**
+- **Docker:** For creating consistent development and production environments.
+
+**CI/CD:**
+- **GitHub Actions:** For automated testing and deployment pipelines.
+
+**Hosting:**
+- **Backend:** Cloudflare Workers
+- **Frontend:** Cloudflare Pages
+- **Database:** Supabase (managed PostgreSQL)
+
+**Monitoring and Logging:**
+- **Sentry:** For error tracking and performance monitoring.
+- **ELK Stack (Elasticsearch, Logstash, Kibana):** For log management and analysis.
+
+### 5. Testing
+**Backend Testing:**
+- **Pytest:** For writing and running Python tests.
+
+**Frontend Testing:**
+- **Jest:** For JavaScript unit testing.
+- **React Testing Library:** For testing React components.
+- **Cypress:** For end-to-end testing.
+
+### 6. Version Control
+- **Git:** For version control.
+- **GitHub or GitLab:** For repository hosting and collaboration.
+
+### 7. Development Tools
+- **Cursor:** As the primary IDE with extensions for Python, React, and related technologies.
+- **ESLint and Prettier:** For code linting and formatting.
+- **Poetry:** For Python dependency management.
+- **pnpm:** For efficient Node.js package management.
+
+### 8. Analytics
+- **Google Analytics:** For website usage analytics.
+- **Mixpanel or Amplitude:** For more detailed user behavior analysis.
