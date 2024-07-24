@@ -1,54 +1,44 @@
-# Prototype Project
+# Agentic Writer Workflow Prototype
 
 ## Description
-
-This is a prototype project that [brief description of what the prototype does or demonstrates]. It serves as a proof of concept for [main idea or technology being explored].
+This prototype project demonstrates an AI-powered writing assistant that generates content from YouTube video transcriptions. It serves as a proof of concept for an agentic writing system utilizing multiple AI agents to manage different aspects of the writing process.
 
 ## Installation
-
 To set up this prototype locally, follow these steps:
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/prototype-project.git
+   ```bash
+   git clone https://github.com/pukpuklouis/agentic-writer-prototype.git
    ```
 
 2. Navigate to the project directory:
-   ```
-   cd prototype-project
+   ```bash
+   cd agentic-writer-prototype
    ```
 
 3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
    ```
-   npm install
-   ```
-   // TODO: Update with actual package manager and installation command if different
 
 ## Usage
-
 To run the prototype:
 
 1. Start the application:
+   ```bash
+   uvicorn main:app --reload
    ```
-   npm start
-   ```
-   // TODO: Update with actual command to run the prototype
 
-2. Open your web browser and go to `http://localhost:3000`
-   // TODO: Update with actual URL if different
+2. Open your web browser and navigate to [http://localhost:8000](http://localhost:8000).
 
 ## Features
-
-- Feature 1: [Brief description]
-- Feature 2: [Brief description]
-- Feature 3: [Brief description]
-// TODO: Add or update actual features of the prototype
+- YouTube video transcription processing
+- AI-driven content drafting
+- Basic review and scoring system
+- Simple user interface for content viewing and minimal editing
 
 ## Contributing
-
 This is a prototype project and is not currently open for contributions. However, feedback and suggestions are welcome.
 
 ## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-// TODO: Update with actual license if different
+This project is licensed under the MIT License. See the LICENSE file for details.
